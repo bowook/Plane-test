@@ -11,6 +11,10 @@ jobs:
       pull-requests: write
 
     steps:
+      # 👇 이 부분이 새로 추가되었습니다! (레포지토리 정보 불러오기)
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
       - name: 브랜치명에서 이슈 번호 추출
         id: extract
         run: |
@@ -36,4 +40,3 @@ jobs:
           else
             echo "이미 이슈 번호가 PR 본문에 있습니다."
           fi
-          
