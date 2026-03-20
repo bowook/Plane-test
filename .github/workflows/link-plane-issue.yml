@@ -1,0 +1,39 @@
+name: Link Plane Issue to PR
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  link-issue:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: 브랜치명에서 이슈 번호 추출
+        id: extract
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+          ISSUE_ID=$(echo "$BRANCH_NAME" | grep -oE '[A-Z]+-[0-9]+' || true)
+          echo "issue_id=$ISSUE_ID" >> $GITHUB_OUTPUT
+
+      - name: PR 본문에 태그 추가
+        if: steps.extract.outputs.issue_id != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          ISSUE_ID: ${{ steps.extract.outputs.issue_id }}
+        run: |
+          if [[ "$PR_BODY" != *"[$ISSUE_ID]"* ]]; then
+            NEW_BODY="$PR_BODY
+            
+            ---
+            🔗 관련된 Plane 이슈: [$ISSUE_ID]"
+            
+            gh pr edit "$PR_NUMBER" --body "$NEW_BODY"
+          else
+            echo "이미 이슈 번호가 PR 본문에 있습니다."
+          fi
+          
